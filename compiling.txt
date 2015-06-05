@@ -1,0 +1,1 @@
+g++ -g -Wall -o corrida CorridaIrada.cpp Model.cpp Texture.cpp Car.cpp -L/usr/lib/nvidia-331 -lGL -lglut -lGLEW
