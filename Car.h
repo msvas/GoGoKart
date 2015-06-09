@@ -11,6 +11,9 @@ class Car
     public:
         Texture *carTex;
         Model *carModel;
+        int xPosition;
+        int yPosition;
+        int zPosition;
         Car();
     protected:
     private:

@@ -3,6 +3,7 @@
 using namespace glm;
 
 #define GLEW_STATIC
+#define pi 3.14159265
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -25,31 +26,15 @@ bool keystates[256];
 GLuint programID;
 GLuint matrixID;        // Get a handle for our "MVP" uniform
 
-//plane
-GLuint vertexBuffer;
-GLuint uvBuffer;
-GLuint textureID1;                  // Get a handle for our "myTextureSampler" uniform
-std::vector<glm::vec3> vertices;
-std::vector<glm::vec2> uvs;
-std::vector<glm::vec3> normals;
-
-//hands
-GLuint vertexID2;
-GLuint vertexBuffer2;
-GLuint uvBuffer2;
-GLuint textureID2;                  // Get a handle for our "myTextureSampler" uniform
-std::vector<glm::vec3> handVertices;
-std::vector<glm::vec2> handUV;
-std::vector<glm::vec3> handNormals;
-
-//brick texture
-GLuint textureID3;
-
 //player position
 float posx = 0;
-float posy = 2;
-float posz = -3;
+float posy = 0;
+float posz = 0;
 float angle = 0;
+
+glm::vec3 cameraPos   = glm::vec3(0, 2.5f, -1.5f);
+glm::vec3 cameraFront = glm::vec3(0.0f, 1.0f, 3.0f);
+glm::vec3 cameraUp    = glm::vec3(0.0f, 1.0f,  0.0f);
 
 CorridaIrada *game;
 
@@ -120,15 +105,24 @@ void CorridaIrada::keyboardUp(unsigned char key, int x, int y) {
 }
 
 void CorridaIrada::idle() {
+  if (keystates['w']) {   //-9 < z|x < 9
+      posz -= 0.3f * cos(pi*angle/180);   //cos() e sin() usam radianos, ent鉶 deve-se multiplicar o
+      posx -= 0.3f * sin(pi*angle/180);   //angulo por pi e dividir por 180 para ter o valor certo
+  }
+  if (keystates['s']) {
+      posz += 0.3f * cos(pi*angle/180);
+      posx += 0.3f * sin(pi*angle/180);
+  }
 
-    if (keystates['w'] && posz < 7)
-        posz += 0.05;
-    if (keystates['s'] && posz > -7)
-        posz -= 0.05;
-    if (keystates['a'])
-        angle -= 0.3;
-    if (keystates['d'])
-        angle += 0.3;
+  if (keystates['a'])
+      angle += 5.0f;
+  if (keystates['d'])
+      angle -= 5.0f;
+
+  if (angle == 360)
+      angle = 0;
+  if (angle == -10)
+      angle = 350;
 }
 
 void CorridaIrada::drawMesh(int vAttri, GLuint vBuffer, int tAttri, GLuint tBuffer, GLuint text, GLfloat uniform, int vSize) {
@@ -173,19 +167,28 @@ void CorridaIrada::onDisplay() {
 
     glm::mat4 Projection = glm::perspective(45.0f, 16.0f / 9.0f, 0.1f, 100.0f);
 
-    glm::mat4 View       = glm::lookAt(
-								glm::vec3(0, 15, 0),
-								glm::vec3(0, 1, 3),
-								glm::vec3(0, 1, 0)
-						   );
+    //cameraFront = vec3(0, 0, posz);
+    float xCam = posx-2*cos(pi*(-90-angle)/180);
+    float zCam = posz-2*sin(pi*(-90-angle)/180);
+    float xFront = posx+3*cos(pi*(-90-angle)/180);
+    float zFront = posz+3*sin(pi*(-90-angle)/180);
+    cout << xCam << " " << zCam << " " << xFront << " " << zFront << "\n";
+    cameraPos = glm::vec3(xCam, 2.5f, zCam);
+		cameraFront = glm::vec3(xFront, 1.0f, zFront);
 
-    glm::mat4 Model      = glm::mat4(1.0f);
+    glm::mat4 View = glm::lookAt(
+                     cameraPos,
+                     cameraFront,
+                     cameraUp
+            				);
+
+    glm::mat4 Model = glm::mat4(1.0f);
 
     glm::mat4 MVP;
 
     glm::mat4 rotMao = glm::rotate(mat4(1.0f), 180.0f, vec3(0, 1.0f, 0));
     glm::mat4 escMao = glm::scale(mat4(1.0f), vec3(0.1f, 0.1f, 0.1f));
-    glm::mat4 trMao = glm::translate(mat4(1.0f), vec3(0, 0, posz));
+    glm::mat4 trMao = glm::translate(mat4(1.0f), vec3(0, 0, 0));
     MVP = Projection * View * Model * trMao * escMao * rotMao;
     glUniformMatrix4fv(matrixID, 1, GL_FALSE, &MVP[0][0]);
     drawMesh(0, mainCar->carModel->vertexBuffer, 1, mainCar->carModel->uvBuffer, mainCar->carTex->id, 0, mainCar->carModel->vertices.size());
@@ -228,8 +231,8 @@ void CorridaIrada::onDisplay() {
 //libera recursos
 void CorridaIrada::free_resources() {
 
-    glDeleteBuffers(1, &vertexBuffer);
-	glDeleteVertexArrays(1, &vertexID);
+    //glDeleteBuffers(1, &vertexBuffer);
+	  glDeleteVertexArrays(1, &vertexID);
     glDeleteProgram(programID);
 
 }
