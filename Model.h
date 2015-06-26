@@ -15,12 +15,17 @@ using namespace std;
 
 class Model {
     public:
-        std::vector<glm::vec3> vertices;
-        std::vector<glm::vec2> uvs;
-        std::vector<glm::vec3> normals;
-        GLuint vertexBuffer;
-        GLuint uvBuffer;
+      std::vector<glm::vec3> vertices;
+      std::vector<glm::vec2> uvs;
+      std::vector<glm::vec3> normals;
+      glm::vec3 maxPos;
+      glm::vec3 minPos;
+      GLuint vertexBuffer;
+      GLuint uvBuffer;
 
-        Model(const char *objName);
+      Model(const char *objName);
+      glm::vec3 getMax();
+      glm::vec3 getMin();
     private:
+      bool findMinMax();
 };

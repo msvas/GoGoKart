@@ -105,6 +105,8 @@ void CorridaIrada::keyboardUp(unsigned char key, int x, int y) {
 }
 
 void CorridaIrada::idle() {
+  //if(!mainCar->checkCollision())
+      posy -= 0.01f;
   if (keystates['w']) {   //-9 < z|x < 9
       posz -= 0.3f * cos(pi*angle/180);   //cos() e sin() usam radianos, ent鉶 deve-se multiplicar o
       posx -= 0.3f * sin(pi*angle/180);   //angulo por pi e dividir por 180 para ter o valor certo
@@ -115,9 +117,9 @@ void CorridaIrada::idle() {
   }
 
   if (keystates['a'])
-      angle += 5.0f;
+      angle += 1.0f;
   if (keystates['d'])
-      angle -= 5.0f;
+      angle -= 1.0f;
 
   if (angle == 360)
       angle = 0;
@@ -172,9 +174,9 @@ void CorridaIrada::onDisplay() {
     float zCam = posz-2*sin(pi*(-90-angle)/180);
     float xFront = posx+3*cos(pi*(-90-angle)/180);
     float zFront = posz+3*sin(pi*(-90-angle)/180);
-    cout << xCam << " " << zCam << " " << xFront << " " << zFront << "\n";
-    cameraPos = glm::vec3(xCam, 2.5f, zCam);
-		cameraFront = glm::vec3(xFront, 1.0f, zFront);
+    //cout << xCam << " " << zCam << " " << xFront << " " << zFront << "\n";
+    cameraPos = glm::vec3(xCam, 2.5f + posy, zCam);
+		cameraFront = glm::vec3(xFront, 1.0f + posy, zFront);
 
     glm::mat4 View = glm::lookAt(
                      cameraPos,
@@ -186,9 +188,9 @@ void CorridaIrada::onDisplay() {
 
     glm::mat4 MVP;
 
-    glm::mat4 rotMao = glm::rotate(mat4(1.0f), 180.0f, vec3(0, 1.0f, 0));
+    glm::mat4 rotMao = glm::rotate(mat4(1.0f), 180.0f + angle, vec3(0, 1.0f, 0));
     glm::mat4 escMao = glm::scale(mat4(1.0f), vec3(0.1f, 0.1f, 0.1f));
-    glm::mat4 trMao = glm::translate(mat4(1.0f), vec3(0, 0, 0));
+    glm::mat4 trMao = glm::translate(mat4(1.0f), vec3(posx, posy, posz));
     MVP = Projection * View * Model * trMao * escMao * rotMao;
     glUniformMatrix4fv(matrixID, 1, GL_FALSE, &MVP[0][0]);
     drawMesh(0, mainCar->carModel->vertexBuffer, 1, mainCar->carModel->uvBuffer, mainCar->carTex->id, 0, mainCar->carModel->vertices.size());
