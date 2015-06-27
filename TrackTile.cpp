@@ -11,12 +11,20 @@ using namespace std;
 
 #include "TrackTile.h"
 
-TrackTile::TrackTile(Texture *tex, Model *model, int x, int z)
+TrackTile::TrackTile(Texture *tex, Model *model, int x, int y, int z)
 {
     trackTex = tex;
     trackModel = model;
     xPosition = x;
+    yPosition = y;
     zPosition = z;
+
+    size = (model->getMax() - model->getMin());
+    size.x = size.x * 0.2;
+    size.y = size.y * 0.2;
+    size.z = size.z * 0.2;
+
+    //cout << size.x << " " << size.y << " " << size.z << "\n";
 }
 
 void TrackTile::drawTile(GLuint matrixID, glm::mat4 MVP) {
@@ -24,12 +32,16 @@ void TrackTile::drawTile(GLuint matrixID, glm::mat4 MVP) {
 
   //glm::mat4 rot = glm::rotate(mat4(1.0f), 180.0f, vec3(0, 1.0f, 0));
   glm::mat4 sca = glm::scale(mat4(1.0f), vec3(0.2f, 0.2f, 0.2f));
-  glm::mat4 tra = glm::translate(mat4(1.0f), vec3(xPosition, 0, zPosition));
+  glm::mat4 tra = glm::translate(mat4(1.0f), vec3(xPosition, yPosition, zPosition));
 
   MVPaux = MVP * sca * tra;
 
   glUniformMatrix4fv(matrixID, 1, GL_FALSE, &MVPaux[0][0]);
   drawMesh(0, trackModel->vertexBuffer, 1, trackModel->uvBuffer, trackTex->id, 0, trackModel->vertices.size());
+}
+
+int TrackTile::getY() {
+  return yPosition;
 }
 
 void TrackTile::drawMesh(int vAttri, GLuint vBuffer, int tAttri, GLuint tBuffer, GLuint text, GLfloat uniform, int vSize) {

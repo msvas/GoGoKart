@@ -38,24 +38,24 @@ bool Model::findMinMax() {
   for(it = vertices.begin(); it != vertices.end(); it++) {
     if((*it).x > maxPos.x)
       maxPos.x = (*it).x;
-    if((*it).y > maxPos.x)
-      maxPos.y = (*it).x;
-    if((*it).z > maxPos.x)
-      maxPos.z = (*it).x;
+    if((*it).y > maxPos.y)
+      maxPos.y = (*it).y;
+    if((*it).z > maxPos.z)
+      maxPos.z = (*it).z;
     if((*it).x < minPos.x)
       minPos.x = (*it).x;
-    if((*it).y < minPos.x)
-      minPos.y = (*it).x;
-    if((*it).z < minPos.x)
-      minPos.z = (*it).x;
+    if((*it).y < minPos.y)
+      minPos.y = (*it).y;
+    if((*it).z < minPos.z)
+      minPos.z = (*it).z;
   }
-  //cout << minPos.x << " " << maxPos.x;
+  //cout << minPos.x << " " << maxPos.x << "\n";
 }
 
 glm::vec3 Model::getMax() {
-
+  return maxPos;
 }
 
 glm::vec3 Model::getMin() {
-
+  return minPos;
 }

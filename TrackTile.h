@@ -17,11 +17,16 @@ class TrackTile
     public:
         Texture *trackTex;
         Model *trackModel;
+        glm::vec3 size;
+        glm::vec3 begin;
+        glm::vec3 end;
         int xPosition;
+        int yPosition;
         int zPosition;
 
-        TrackTile(Texture *tex, Model *model, int x, int z);
+        TrackTile(Texture *tex, Model *model, int x, int y, int z);
         void drawTile(GLuint matrixID, glm::mat4 MVP);
+        int getY();
     protected:
         void drawMesh(int vAttri, GLuint vBuffer, int tAttri, GLuint tBuffer, GLuint text, GLfloat uniform, int vSize);
     private:

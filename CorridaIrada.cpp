@@ -67,14 +67,11 @@ int CorridaIrada::init_resources() {
     glGenVertexArrays(1, &(this->vertexID));
     glBindVertexArray(this->vertexID);
 
-    mainCar = new Car();
-
     programID = LoadShaders( "TransformVertexShader.vertexshader", "TextureFragmentShader.fragmentshader" );
     matrixID = glGetUniformLocation(programID, "MVP");
 
-    mainCar->carTex = new Texture(programID, car1.width, car1.height, car1.pixel_data);
+    mainCar = new Car(new Texture(programID, car1.width, car1.height, car1.pixel_data), new Model("objects/firstCar.obj"));
     insertTex(mainCar->carTex);
-    mainCar->carModel = new Model("objects/firstCar.obj");
     insertModel(mainCar->carModel);
 
     skyTex = new Texture(programID, sky.width, sky.height, sky.pixel_data);
@@ -105,7 +102,7 @@ void CorridaIrada::keyboardUp(unsigned char key, int x, int y) {
 }
 
 void CorridaIrada::idle() {
-  //if(!mainCar->checkCollision())
+  if(!mainCar->checkTrackCollision(allTracks))
       posy -= 0.01f;
   if (keystates['w']) {   //-9 < z|x < 9
       posz -= 0.3f * cos(pi*angle/180);   //cos() e sin() usam radianos, ent鉶 deve-se multiplicar o
@@ -191,6 +188,7 @@ void CorridaIrada::onDisplay() {
     glm::mat4 rotMao = glm::rotate(mat4(1.0f), 180.0f + angle, vec3(0, 1.0f, 0));
     glm::mat4 escMao = glm::scale(mat4(1.0f), vec3(0.1f, 0.1f, 0.1f));
     glm::mat4 trMao = glm::translate(mat4(1.0f), vec3(posx, posy, posz));
+    mainCar->setPosition(posx, posy, posz);
     MVP = Projection * View * Model * trMao * escMao * rotMao;
     glUniformMatrix4fv(matrixID, 1, GL_FALSE, &MVP[0][0]);
     drawMesh(0, mainCar->carModel->vertexBuffer, 1, mainCar->carModel->uvBuffer, mainCar->carTex->id, 0, mainCar->carModel->vertices.size());
@@ -296,11 +294,26 @@ void CorridaIrada::kUp(unsigned char key, int x, int y) {
 }
 
 void CorridaIrada::createTrack() {
-  TrackTile *tiles[10];
+  TrackTile *tiles[40];
   int i;
 
   for(i = 0; i < 10; i++) {
-    tiles[i] = new TrackTile(trackTex, trackModel, i*10, i*3);
+    tiles[i] = new TrackTile(trackTex, trackModel, 0, 0, i*20);
+    this->insertTrack(tiles[i]);
+  }
+
+  for(i = 10; i < 20; i++) {
+    tiles[i] = new TrackTile(trackTex, trackModel, ((i-10)+1)*20, 0, 0);
+    this->insertTrack(tiles[i]);
+  }
+
+  for(i = 20; i < 30; i++) {
+    tiles[i] = new TrackTile(trackTex, trackModel, 220, 0, ((i-20))*20);
+    this->insertTrack(tiles[i]);
+  }
+
+  for(i = 30; i < 40; i++) {
+    tiles[i] = new TrackTile(trackTex, trackModel, ((i-30)+1)*20, 0, 180);
     this->insertTrack(tiles[i]);
   }
 

@@ -17,12 +17,16 @@ class Car
     public:
         Texture *carTex;
         Model *carModel;
+        glm::vec3 size;
+        glm::vec3 begin;
+        glm::vec3 end;
         int xPosition;
         int yPosition;
         int zPosition;
 
-        Car();
+        Car(Texture *tex, Model *model);
         bool checkTrackCollision(std::list<TrackTile*> allTracks);
+        void setPosition(int x, int y, int z);
     protected:
     private:
 };
