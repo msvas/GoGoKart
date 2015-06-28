@@ -20,6 +20,7 @@ using namespace glm;
 #include "textures/sky.c"
 #include "textures/car1.c"
 #include "textures/planeTexture.c"
+#include "textures/car2.c"
 
 bool keystates[256];
 
@@ -70,9 +71,18 @@ int CorridaIrada::init_resources() {
     programID = LoadShaders( "TransformVertexShader.vertexshader", "TextureFragmentShader.fragmentshader" );
     matrixID = glGetUniformLocation(programID, "MVP");
 
-    mainCar = new Car(new Texture(programID, car1.width, car1.height, car1.pixel_data), new Model("objects/firstCar.obj"));
+    mainCar = new Car(new Texture(programID, car1.width, car1.height, car1.pixel_data), new Model("objects/firstCar.obj"), false);
     insertTex(mainCar->carTex);
     insertModel(mainCar->carModel);
+
+    computerCars[0] = new Car(new Texture(programID, car2.width, car2.height, car2.pixel_data), new Model("objects/secondCar.obj"), true);
+    computerCars[0]->setPosition(10, 0, 10);
+    insertTex(computerCars[0]->carTex);
+    insertModel(computerCars[0]->carModel);
+
+    /*computerCars[1] = new Car(new Texture(programID, car1.width, car1.height, car1.pixel_data), new Model("objects/firstCar.obj"));
+    insertTex(mainCar->carTex);
+    insertModel(mainCar->carModel);*/
 
     skyTex = new Texture(programID, sky.width, sky.height, sky.pixel_data);
     this->insertTex(skyTex);
@@ -102,8 +112,13 @@ void CorridaIrada::keyboardUp(unsigned char key, int x, int y) {
 }
 
 void CorridaIrada::idle() {
-  if(!mainCar->checkTrackCollision(allTracks))
-      posy -= 0.01f;
+  if(!mainCar->checkTrackCollision(allTracks)) {
+    posy -= 0.01f;
+  }
+  if(!computerCars[0]->checkTrackCollision(allTracks)) {
+    posy -= 0.01f;
+  }
+  computerCars[0]->movementGain(allTracks);
   if (keystates['w']) {   //-9 < z|x < 9
       posz -= 0.3f * cos(pi*angle/180);   //cos() e sin() usam radianos, ent鉶 deve-se multiplicar o
       posx -= 0.3f * sin(pi*angle/180);   //angulo por pi e dividir por 180 para ter o valor certo
@@ -192,6 +207,14 @@ void CorridaIrada::onDisplay() {
     MVP = Projection * View * Model * trMao * escMao * rotMao;
     glUniformMatrix4fv(matrixID, 1, GL_FALSE, &MVP[0][0]);
     drawMesh(0, mainCar->carModel->vertexBuffer, 1, mainCar->carModel->uvBuffer, mainCar->carTex->id, 0, mainCar->carModel->vertices.size());
+
+    rotMao = glm::rotate(mat4(1.0f), 180.0f, vec3(0, 1.0f, 0));
+    escMao = glm::scale(mat4(1.0f), vec3(4.0f, 4.0f, 4.0f));
+    trMao = glm::translate(mat4(1.0f), vec3(computerCars[0]->xPosition, 0, computerCars[0]->zPosition));
+    cout << computerCars[0]->xPosition << " " << computerCars[0]->zPosition << "\n";
+    MVP = Projection * View * Model * trMao * escMao * rotMao;
+    glUniformMatrix4fv(matrixID, 1, GL_FALSE, &MVP[0][0]);
+    drawMesh(0, computerCars[0]->carModel->vertexBuffer, 1, computerCars[0]->carModel->uvBuffer, computerCars[0]->carTex->id, 0, computerCars[0]->carModel->vertices.size());
 
     /*MVP = Projection * View * Model;
     glUniformMatrix4fv(matrixID, 1, GL_FALSE, &MVP[0][0]);

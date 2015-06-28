@@ -13,11 +13,13 @@ using namespace std;
 
 TrackTile::TrackTile(Texture *tex, Model *model, int x, int y, int z)
 {
-    trackTex = tex;
-    trackModel = model;
-    xPosition = x;
-    yPosition = y;
-    zPosition = z;
+    this->trackTex = tex;
+    this->trackModel = model;
+    this->xPosition = x;
+    this->yPosition = y;
+    this->zPosition = z;
+
+    //std::cout << "Criando: " << xPosition << " " << zPosition << "\n";
 
     size = (model->getMax() - model->getMin());
     size.x = size.x * 0.2;
@@ -38,10 +40,20 @@ void TrackTile::drawTile(GLuint matrixID, glm::mat4 MVP) {
 
   glUniformMatrix4fv(matrixID, 1, GL_FALSE, &MVPaux[0][0]);
   drawMesh(0, trackModel->vertexBuffer, 1, trackModel->uvBuffer, trackTex->id, 0, trackModel->vertices.size());
+  //std::cout << "Dentro: " << xPosition << " " << zPosition << "\n";
 }
 
 int TrackTile::getY() {
   return yPosition;
+}
+
+glm::vec3 TrackTile::getPosition() {
+  glm::vec3 pos = glm::vec3(xPosition, yPosition, zPosition);
+
+  //std::cout << "Dentro: " << pos.x << " " << pos.y << "\n";
+  //std::cout << "Dentro: " << xPosition << " " << zPosition << "\n";
+
+  return pos;
 }
 
 void TrackTile::drawMesh(int vAttri, GLuint vBuffer, int tAttri, GLuint tBuffer, GLuint text, GLfloat uniform, int vSize) {

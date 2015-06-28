@@ -24,6 +24,7 @@ class CorridaIrada {
         std::list<Texture*> textures;
         std::list<Model*> models;
         Car *mainCar;
+        Car *computerCars[2];
         Texture *skyTex;
         Model *skyModel;
         Texture *trackTex;

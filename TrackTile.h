@@ -27,6 +27,7 @@ class TrackTile
         TrackTile(Texture *tex, Model *model, int x, int y, int z);
         void drawTile(GLuint matrixID, glm::mat4 MVP);
         int getY();
+        glm::vec3 getPosition();
     protected:
         void drawMesh(int vAttri, GLuint vBuffer, int tAttri, GLuint tBuffer, GLuint text, GLfloat uniform, int vSize);
     private:

@@ -20,13 +20,16 @@ class Car
         glm::vec3 size;
         glm::vec3 begin;
         glm::vec3 end;
-        int xPosition;
-        int yPosition;
-        int zPosition;
+        float xPosition;
+        float yPosition;
+        float zPosition;
+        int currentTile;
+        bool automatic;
 
-        Car(Texture *tex, Model *model);
+        Car(Texture *tex, Model *model, bool cpuPlayer);
         bool checkTrackCollision(std::list<TrackTile*> allTracks);
         void setPosition(int x, int y, int z);
+        glm::vec3 movementGain(std::list<TrackTile*> allTracks);
     protected:
     private:
 };
