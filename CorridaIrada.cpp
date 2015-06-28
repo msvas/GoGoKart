@@ -79,7 +79,7 @@ int CorridaIrada::init_resources() {
     insertModel(mainCar->carModel);
 
     computerCars[0] = new Car(new Texture(programID, car2.width, car2.height, car2.pixel_data), new Model("objects/secondCar.obj"), true, 4);
-    computerCars[0]->setPosition(10, 0, 10);
+    computerCars[0]->setPosition(5, 0, 0);
     insertTex(computerCars[0]->carTex);
     insertModel(computerCars[0]->carModel);
 
@@ -120,19 +120,20 @@ void CorridaIrada::idle() {
   oldTimeSinceStart = timeSinceStart;
 
   if(!mainCar->checkTrackCollision(allTracks)) {
-    posy -= 0.01f;
+    mainCar->yPosition -= 0.01f;
+    //cout << "caindo" << "\n";
   }
-  /*if(!computerCars[0]->checkTrackCollision(allTracks)) {
-    posy -= 0.01f;
-  }*/
+  if(!computerCars[0]->checkTrackCollision(allTracks)) {
+    //mainCar->yPosition -= 0.01f;
+  }
   computerCars[0]->movementGain(allTracks, deltaTime);
   if (keystates['w']) {   //-9 < z|x < 9
-      posz -= 0.3f * cos(pi*angle/180);   //cos() e sin() usam radianos, ent鉶 deve-se multiplicar o
-      posx -= 0.3f * sin(pi*angle/180);   //angulo por pi e dividir por 180 para ter o valor certo
+      mainCar->zPosition -= 5 * deltaTime * cos(pi*angle/180);   //cos() e sin() usam radianos, ent鉶 deve-se multiplicar o
+      mainCar->xPosition -= 5 * deltaTime * sin(pi*angle/180);   //angulo por pi e dividir por 180 para ter o valor certo
   }
   if (keystates['s']) {
-      posz += 0.3f * cos(pi*angle/180);
-      posx += 0.3f * sin(pi*angle/180);
+      mainCar->zPosition += 5 * deltaTime * cos(pi*angle/180);
+      mainCar->xPosition += 5 * deltaTime * sin(pi*angle/180);
   }
 
   if (keystates['a'])
@@ -189,13 +190,12 @@ void CorridaIrada::onDisplay() {
     glm::mat4 Projection = glm::perspective(45.0f, 16.0f / 9.0f, 0.1f, 100.0f);
 
     //cameraFront = vec3(0, 0, posz);
-    float xCam = posx-2*cos(pi*(-90-angle)/180);
-    float zCam = posz-2*sin(pi*(-90-angle)/180);
-    float xFront = posx+3*cos(pi*(-90-angle)/180);
-    float zFront = posz+3*sin(pi*(-90-angle)/180);
-    //cout << xCam << " " << zCam << " " << xFront << " " << zFront << "\n";
-    cameraPos = glm::vec3(xCam, 2.5f + posy, zCam);
-		cameraFront = glm::vec3(xFront, 1.0f + posy, zFront);
+    float xCam = mainCar->xPosition - 2*cos(pi*(-90-angle)/180);
+    float zCam = mainCar->zPosition - 2*sin(pi*(-90-angle)/180);
+    float xFront = mainCar->xPosition + 3*cos(pi*(-90-angle)/180);
+    float zFront = mainCar->zPosition + 3*sin(pi*(-90-angle)/180);
+    cameraPos = glm::vec3(xCam, 2.5f + mainCar->yPosition, zCam);
+		cameraFront = glm::vec3(xFront, 1.0f + mainCar->yPosition, zFront);
 
     glm::mat4 View = glm::lookAt(
                      cameraPos,
@@ -209,8 +209,8 @@ void CorridaIrada::onDisplay() {
 
     glm::mat4 rotMao = glm::rotate(mat4(1.0f), 180.0f + angle, vec3(0, 1.0f, 0));
     glm::mat4 escMao = glm::scale(mat4(1.0f), vec3(0.1f, 0.1f, 0.1f));
-    glm::mat4 trMao = glm::translate(mat4(1.0f), vec3(posx, posy, posz));
-    mainCar->setPosition(posx, posy, posz);
+    glm::mat4 trMao = glm::translate(mat4(1.0f), vec3(mainCar->xPosition, mainCar->yPosition, mainCar->zPosition));
+    //mainCar->setPosition(posx, posy, posz);
     MVP = Projection * View * Model * trMao * escMao * rotMao;
     glUniformMatrix4fv(matrixID, 1, GL_FALSE, &MVP[0][0]);
     drawMesh(0, mainCar->carModel->vertexBuffer, 1, mainCar->carModel->uvBuffer, mainCar->carTex->id, 0, mainCar->carModel->vertices.size());
@@ -242,7 +242,7 @@ void CorridaIrada::onDisplay() {
         drawMesh(0, auxTrack->trackModel->vertexBuffer, 1, auxTrack->trackModel->uvBuffer, auxTrack->trackTex->id, 0, auxTrack->trackModel->vertices.size());
     }*/
 
-    glm::mat4 viewChar = glm::translate(mat4(1.0f), vec3(0, 0, posz)) * glm::translate(mat4(1.0f), vec3(0, 0, -posz)) * glm::scale(mat4(1.0f), vec3(60, 60, 60));
+    glm::mat4 viewChar = glm::translate(mat4(1.0f), vec3(0, 0, mainCar->zPosition)) * glm::translate(mat4(1.0f), vec3(0, 0, -mainCar->zPosition)) * glm::scale(mat4(1.0f), vec3(60, 60, 60));
 
 	  MVP = Projection * View * Model * viewChar;
     glUniformMatrix4fv(matrixID, 1, GL_FALSE, &MVP[0][0]);
@@ -327,22 +327,22 @@ void CorridaIrada::createTrack() {
   int i;
 
   for(i = 0; i < 10; i++) {
-    tiles[i] = new TrackTile(trackTex, trackModel, 0.5, 0, 0, i*20);
+    tiles[i] = new TrackTile(trackTex, trackModel, 1, 0, 0, i*20);
     this->insertTrack(tiles[i]);
   }
 
   for(i = 10; i < 20; i++) {
-    tiles[i] = new TrackTile(trackTex, trackModel, 0.5, ((i-10)+1)*20, 0, 0);
+    tiles[i] = new TrackTile(trackTex, trackModel, 1, ((i-10)+1)*20, 0, 180);
     this->insertTrack(tiles[i]);
   }
 
   for(i = 20; i < 30; i++) {
-    tiles[i] = new TrackTile(trackTex, trackModel, 0.5, 220, 0, ((i-20))*20);
+    tiles[i] = new TrackTile(trackTex, trackModel, 1, ((i-20)+1)*20, 0, 0);
     this->insertTrack(tiles[i]);
   }
 
   for(i = 30; i < 40; i++) {
-    tiles[i] = new TrackTile(trackTex, trackModel, 0.5, ((i-30)+1)*20, 0, 180);
+    tiles[i] = new TrackTile(trackTex, trackModel, 1, 220, 0, ((i-30))*20);
     this->insertTrack(tiles[i]);
   }
 

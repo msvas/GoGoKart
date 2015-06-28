@@ -29,14 +29,14 @@ class Car
 
     Car(Texture *tex, Model *model, bool cpuPlayer, float scale);
     bool checkTrackCollision(std::list<TrackTile*> allTracks);
-    void setPosition(int x, int y, int z);
+    void setPosition(float x, float y, float z);
     glm::vec3 movementGain(std::list<TrackTile*> allTracks, float delta);
   protected:
   private:
-    int getBottom();
-    int getFront();
-    int getLeft();
-    int getRight();
+    float getBottom();
+    float getFront();
+    float getLeft();
+    float getRight();
 };
 
 #endif // CAR_H

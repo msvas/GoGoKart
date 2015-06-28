@@ -29,10 +29,10 @@ class TrackTile
     void drawTile(GLuint matrixID, glm::mat4 MVP);
     int getY();
     glm::vec3 getPosition();
-    int getBottom();
-    int getFront();
-    int getLeft();
-    int getRight();
+    float getBottom();
+    float getFront();
+    float getLeft();
+    float getRight();
   protected:
     void drawMesh(int vAttri, GLuint vBuffer, int tAttri, GLuint tBuffer, GLuint text, GLfloat uniform, int vSize);
   private:

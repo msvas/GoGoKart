@@ -28,17 +28,17 @@ TrackTile::TrackTile(Texture *tex, Model *model, float scale, int x, int y, int 
     size.z = size.z * scale;
 
     //cout << size.x << " " << size.y << " " << size.z << "\n";
-    cout << getLeft() << " " << getRight() << "\n";
+    cout << xPosition << " " << yPosition << " " << zPosition << "\n";
+    //cout << getLeft() << " " << getRight() << "\n";
 }
 
 void TrackTile::drawTile(GLuint matrixID, glm::mat4 MVP) {
   glm::mat4 MVPaux;
 
-  //glm::mat4 rot = glm::rotate(mat4(1.0f), 180.0f, vec3(0, 1.0f, 0));
-  glm::mat4 sca = glm::scale(mat4(1.0f), vec3(0.2f, 0.2f, 0.2f));
+  glm::mat4 sca = glm::scale(mat4(1.0f), vec3(scale, scale, scale));
   glm::mat4 tra = glm::translate(mat4(1.0f), vec3(xPosition, yPosition, zPosition));
 
-  MVPaux = MVP * sca * tra;
+  MVPaux = MVP * tra * sca;
 
   glUniformMatrix4fv(matrixID, 1, GL_FALSE, &MVPaux[0][0]);
   drawMesh(0, trackModel->vertexBuffer, 1, trackModel->uvBuffer, trackTex->id, 0, trackModel->vertices.size());
@@ -93,26 +93,26 @@ void TrackTile::drawMesh(int vAttri, GLuint vBuffer, int tAttri, GLuint tBuffer,
      glDrawArrays(GL_TRIANGLES, 0, vSize );
  }
 
- int TrackTile::getBottom() {
-   int bottom;
+ float TrackTile::getBottom() {
+   float bottom;
    bottom = xPosition + (trackModel->getMin().x * scale);
    return bottom;
  }
 
- int TrackTile::getFront() {
-   int front;
+ float TrackTile::getFront() {
+   float front;
    front = xPosition + (trackModel->getMax().x * scale);
    return front;
  }
 
- int TrackTile::getLeft() {
-   int left;
+ float TrackTile::getLeft() {
+   float left;
    left = zPosition + (trackModel->getMin().z * scale);
    return left;
  }
 
- int TrackTile::getRight() {
-   int right;
+ float TrackTile::getRight() {
+   float right;
    right = zPosition + (trackModel->getMax().z * scale);
    return right;
  }
