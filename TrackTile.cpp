@@ -11,22 +11,24 @@ using namespace std;
 
 #include "TrackTile.h"
 
-TrackTile::TrackTile(Texture *tex, Model *model, int x, int y, int z)
+TrackTile::TrackTile(Texture *tex, Model *model, float scale, int x, int y, int z)
 {
     this->trackTex = tex;
     this->trackModel = model;
     this->xPosition = x;
     this->yPosition = y;
     this->zPosition = z;
+    this->scale = scale;
 
     //std::cout << "Criando: " << xPosition << " " << zPosition << "\n";
 
     size = (model->getMax() - model->getMin());
-    size.x = size.x * 0.2;
-    size.y = size.y * 0.2;
-    size.z = size.z * 0.2;
+    size.x = size.x * scale;
+    size.y = size.y * scale;
+    size.z = size.z * scale;
 
     //cout << size.x << " " << size.y << " " << size.z << "\n";
+    cout << getLeft() << " " << getRight() << "\n";
 }
 
 void TrackTile::drawTile(GLuint matrixID, glm::mat4 MVP) {
@@ -89,4 +91,28 @@ void TrackTile::drawMesh(int vAttri, GLuint vBuffer, int tAttri, GLuint tBuffer,
     );
     //printf("%i %i\n", textureID1, vSize);
      glDrawArrays(GL_TRIANGLES, 0, vSize );
+ }
+
+ int TrackTile::getBottom() {
+   int bottom;
+   bottom = xPosition + (trackModel->getMin().x * scale);
+   return bottom;
+ }
+
+ int TrackTile::getFront() {
+   int front;
+   front = xPosition + (trackModel->getMax().x * scale);
+   return front;
+ }
+
+ int TrackTile::getLeft() {
+   int left;
+   left = zPosition + (trackModel->getMin().z * scale);
+   return left;
+ }
+
+ int TrackTile::getRight() {
+   int right;
+   right = zPosition + (trackModel->getMax().z * scale);
+   return right;
  }

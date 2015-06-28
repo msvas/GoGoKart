@@ -14,24 +14,29 @@ using namespace std;
 
 class Car
 {
-    public:
-        Texture *carTex;
-        Model *carModel;
-        glm::vec3 size;
-        glm::vec3 begin;
-        glm::vec3 end;
-        float xPosition;
-        float yPosition;
-        float zPosition;
-        int currentTile;
-        bool automatic;
+  public:
+    Texture *carTex;
+    Model *carModel;
+    glm::vec3 size;
+    glm::vec3 begin;
+    glm::vec3 end;
+    float xPosition;
+    float yPosition;
+    float zPosition;
+    float scale;
+    int currentTile;
+    bool automatic;
 
-        Car(Texture *tex, Model *model, bool cpuPlayer);
-        bool checkTrackCollision(std::list<TrackTile*> allTracks);
-        void setPosition(int x, int y, int z);
-        glm::vec3 movementGain(std::list<TrackTile*> allTracks);
-    protected:
-    private:
+    Car(Texture *tex, Model *model, bool cpuPlayer, float scale);
+    bool checkTrackCollision(std::list<TrackTile*> allTracks);
+    void setPosition(int x, int y, int z);
+    glm::vec3 movementGain(std::list<TrackTile*> allTracks, float delta);
+  protected:
+  private:
+    int getBottom();
+    int getFront();
+    int getLeft();
+    int getRight();
 };
 
 #endif // CAR_H
