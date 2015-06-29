@@ -1,9 +1,12 @@
 
 #include <stdio.h>
 #include <stdlib.h>
+#include <math.h>
 #include <iostream>
 #include <list>
 #include "Car.h"
+
+#define pi 3.14159265
 
 Car::Car(Texture *tex, Model *model, bool cpuPlayer, float scale)
 {
@@ -18,7 +21,9 @@ Car::Car(Texture *tex, Model *model, bool cpuPlayer, float scale)
   speed = glm::vec3(0, 0, 0);
   maxSpeed = glm::vec3(0.1, 0.1, 0.1);
   lap = 0;
-
+  angle = 0;
+  enteredFinish = false;
+  checkpoints.push_back(0);
 
   //std::cout << "Dentro: " << carModel->getMax().z << " " << carModel->getMin().z << "\n";
   size = (carModel->getMax() - carModel->getMin());
@@ -72,8 +77,9 @@ bool Car::checkTrackCollision(std::list<TrackTile*> allTracks) {
             //cout << "3\n";
             if(getBottom() < (*iterator)->getFront()) {
               collided = true;
+              lastTile = currentTile;
               currentTile = i;
-              checkLap(*iterator);
+              checkLap(*iterator, allTracks.size());
               //cout << "Atual " << currentTile << "\n";
             }
           }
@@ -92,13 +98,21 @@ void Car::setPosition(float x, float y, float z) {
   //cout << xPosition << " " << zPosition << "\n";
 }
 
-void Car::checkLap(TrackTile* tile) {
-  if(currentTile == 0) {
-    if(getRight() > tile->getRight()) {
-      //cout << getLeft() << " " << tile->getLeft() << "\n";
-      if(getLeft() < tile->getRight()) {
+void Car::checkLap(TrackTile* tile, int totalTiles) {
+  if(lastTile != currentTile) {
+    std::list<int>::iterator iter = checkpoints.end();
+    --iter;
+    if(*iter < currentTile) {
+      checkpoints.push_back(currentTile);
+      //cout << currentTile << "\n";
+    }
+    if(currentTile == 0) {
+      if(checkpoints.size() == (totalTiles)) {
         lap++;
-        cout << lap << "\n";
+        cout << "volta " << lap << "\n";
+        checkpoints.clear();
+        checkpoints.push_back(0);
+        //cout << checkpoints.size() << " " << totalTiles << "\n";
       }
     }
   }
@@ -127,6 +141,30 @@ float Car::getRight() {
   right = zPosition + (carModel->getMax().z * scale);
   return right;
 }
+/*
+glm::vec3 Car::getBottom() {
+  glm::vec3 bottom;
+  bottom = xPosition + (carModel->getMin().x * scale);
+  return bottom;
+}
+
+glm::vec3 Car::getFront() {
+  glm::vec3 front;
+  front = xPosition + (carModel->getMax().x * scale);
+  return front;
+}
+
+glm::vec3 Car::getLeft() {
+  glm::vec3 left;
+  left = zPosition + (carModel->getMin().z * scale);
+  return left;
+}
+
+glm::vec3 Car::getRight() {
+  glm::vec3 right;
+  right = zPosition + (carModel->getMax().z * scale);
+  return right;
+}*/
 
 glm::vec3 Car::movementGain(std::list<TrackTile*> allTracks, float delta) {
   int i;
@@ -136,10 +174,19 @@ glm::vec3 Car::movementGain(std::list<TrackTile*> allTracks, float delta) {
     ++auxTile;
   }
 
+
   glm::vec3 auxPos = glm::vec3(xPosition, yPosition, zPosition);
   glm::vec3 distance = (*auxTile)->getPosition() - auxPos;
   distance.y += yPosition;
   acceleration = glm::normalize(distance);
+
+  glm::vec3 zAxis = glm::vec3(0, 0, 1.0f);
+
+  float dot = acceleration.y * zAxis.y + acceleration.z * zAxis.z;
+  float det = acceleration.y * zAxis.z - acceleration.z * zAxis.y;
+  angle = atan2(det, dot) * 90/pi;
+
+  //cout << angle << "\n";
 
   updateMovement(delta);
 

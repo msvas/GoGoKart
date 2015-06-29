@@ -24,8 +24,10 @@ class Car
     float xPosition;
     float yPosition;
     float zPosition;
+    float angle;
     float scale;
     int currentTile;
+    int lastTile;
     int lap;
     bool automatic;
 
@@ -36,12 +38,14 @@ class Car
     glm::vec3 movementGain(std::list<TrackTile*> allTracks, float delta);
     bool updateMovement(float delta);
   protected:
+    bool enteredFinish;
+    std::list<int> checkpoints;
   private:
     float getBottom();
     float getFront();
     float getLeft();
     float getRight();
-    void checkLap(TrackTile* tile);
+    void checkLap(TrackTile* tile, int totalTiles);
 };
 
 #endif // CAR_H

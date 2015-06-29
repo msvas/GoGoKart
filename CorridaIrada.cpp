@@ -19,7 +19,7 @@ using namespace glm;
 
 #include "textures/sky.c"
 #include "textures/car1.c"
-#include "textures/planeTexture.c"
+#include "textures/track.c"
 #include "textures/car2.c"
 #include "textures/sign.c"
 
@@ -66,7 +66,7 @@ int CorridaIrada::init_resources() {
     for (i = 0; i < 256; i++) {
         keystates[i] = false;
     }
-	  glClearColor(0.0f, 0.5f, 0.0f, 0.0f);
+	  glClearColor(0.0f, 0.0f, 0.5f, 0.0f);
 	  glEnable(GL_DEPTH_TEST);
 
     glGenVertexArrays(1, &(this->vertexID));
@@ -77,6 +77,7 @@ int CorridaIrada::init_resources() {
 
     mainCar = new Car(new Texture(programID, car1.width, car1.height, car1.pixel_data), new Model("objects/firstCar.obj"), false, 0.2);
     mainCar->setPosition(0, -0.7, 0);
+    mainCar->angle = -180;
     insertTex(mainCar->carTex);
     insertModel(mainCar->carModel);
 
@@ -102,7 +103,7 @@ int CorridaIrada::init_resources() {
     signModel = new Model("objects/sign.obj");
     this->insertModel(signModel);
 
-    trackTex = new Texture(programID, planeTexture.width, planeTexture.height, planeTexture.pixel_data);
+    trackTex = new Texture(programID, track.width, track.height, track.pixel_data);
     this->insertTex(trackTex);
     trackModel = new Model("objects/plane.obj");
     this->insertModel(trackModel);
@@ -142,12 +143,12 @@ void CorridaIrada::idle() {
   computerCars[0]->movementGain(allTracks, deltaTime);
 
   if (keystates['w']) {   //-9 < z|x < 9
-      mainCar->acceleration.z = -cos(pi*angle/180);   //cos() e sin() usam radianos, ent鉶 deve-se multiplicar o
-      mainCar->acceleration.x = -sin(pi*angle/180);   //angulo por pi e dividir por 180 para ter o valor certo
+      mainCar->acceleration.z = -cos(pi*mainCar->angle/180);   //cos() e sin() usam radianos, ent鉶 deve-se multiplicar o
+      mainCar->acceleration.x = -sin(pi*mainCar->angle/180);   //angulo por pi e dividir por 180 para ter o valor certo
   }
   else if (keystates['s']) {
-      mainCar->acceleration.z = cos(pi*angle/180);
-      mainCar->acceleration.x = sin(pi*angle/180);
+      mainCar->acceleration.z = cos(pi*mainCar->angle/180);
+      mainCar->acceleration.x = sin(pi*mainCar->angle/180);
   }
   else {
     mainCar->acceleration.z = 0;
@@ -156,14 +157,14 @@ void CorridaIrada::idle() {
   mainCar->updateMovement(deltaTime);
 
   if (keystates['a'])
-      angle += 1.0f;
+      mainCar->angle += 1.0f;
   if (keystates['d'])
-      angle -= 1.0f;
+      mainCar->angle -= 1.0f;
 
-  if (angle == 360)
-      angle = 0;
-  if (angle == -10)
-      angle = 350;
+  if (mainCar->angle == 360)
+      mainCar->angle = 0;
+  if (mainCar->angle == -10)
+      mainCar->angle = 350;
 }
 
 void CorridaIrada::drawMesh(int vAttri, GLuint vBuffer, int tAttri, GLuint tBuffer, GLuint text, GLfloat uniform, int vSize) {
@@ -209,10 +210,10 @@ void CorridaIrada::onDisplay() {
     glm::mat4 Projection = glm::perspective(45.0f, 16.0f / 9.0f, 0.1f, 100.0f);
 
     //cameraFront = vec3(0, 0, posz);
-    float xCam = mainCar->xPosition - 2*cos(pi*(-90-angle)/180);
-    float zCam = mainCar->zPosition - 2*sin(pi*(-90-angle)/180);
-    float xFront = mainCar->xPosition + 3*cos(pi*(-90-angle)/180);
-    float zFront = mainCar->zPosition + 3*sin(pi*(-90-angle)/180);
+    float xCam = mainCar->xPosition - 2*cos(pi*(-90-mainCar->angle)/180);
+    float zCam = mainCar->zPosition - 2*sin(pi*(-90-mainCar->angle)/180);
+    float xFront = mainCar->xPosition + 3*cos(pi*(-90-mainCar->angle)/180);
+    float zFront = mainCar->zPosition + 3*sin(pi*(-90-mainCar->angle)/180);
     cameraPos = glm::vec3(xCam, 2.5f + mainCar->yPosition, zCam);
 		cameraFront = glm::vec3(xFront, 1.0f + mainCar->yPosition, zFront);
 
@@ -226,7 +227,7 @@ void CorridaIrada::onDisplay() {
 
     glm::mat4 MVP;
 
-    glm::mat4 rotMao = glm::rotate(mat4(1.0f), 180.0f + angle, vec3(0, 1.0f, 0));
+    glm::mat4 rotMao = glm::rotate(mat4(1.0f), 180 + mainCar->angle, vec3(0, 1.0f, 0));
     glm::mat4 escMao = glm::scale(mat4(1.0f), vec3(0.1f, 0.1f, 0.1f));
     glm::mat4 trMao = glm::translate(mat4(1.0f), vec3(mainCar->xPosition, mainCar->yPosition, mainCar->zPosition));
     //mainCar->setPosition(posx, posy, posz);
@@ -234,7 +235,7 @@ void CorridaIrada::onDisplay() {
     glUniformMatrix4fv(matrixID, 1, GL_FALSE, &MVP[0][0]);
     drawMesh(0, mainCar->carModel->vertexBuffer, 1, mainCar->carModel->uvBuffer, mainCar->carTex->id, 0, mainCar->carModel->vertices.size());
 
-    rotMao = glm::rotate(mat4(1.0f), 180.0f, vec3(0, 1.0f, 0));
+    rotMao = glm::rotate(mat4(1.0f), 180.0f + computerCars[0]->angle, vec3(0, 1.0f, 0));
     escMao = glm::scale(mat4(1.0f), vec3(4.0f, 4.0f, 4.0f));
     trMao = glm::translate(mat4(1.0f), vec3(computerCars[0]->xPosition, computerCars[0]->yPosition, computerCars[0]->zPosition));
     MVP = Projection * View * Model * trMao * escMao * rotMao;
@@ -251,13 +252,13 @@ void CorridaIrada::onDisplay() {
         (*iterator)->drawTile(matrixID, MVP);
     }
 
-    glm::mat4 viewChar = glm::scale(mat4(1.0f), vec3(30, 30, 30));
+    /*glm::mat4 viewChar = glm::scale(mat4(1.0f), vec3(30, 30, 30));
 
 	  MVP = Projection * View * Model * viewChar;
     glUniformMatrix4fv(matrixID, 1, GL_FALSE, &MVP[0][0]);
-    drawMesh(0, skyModel->vertexBuffer, 1, skyModel->uvBuffer, skyTex->id, 0, skyModel->vertices.size());
+    drawMesh(0, skyModel->vertexBuffer, 1, skyModel->uvBuffer, skyTex->id, 0, skyModel->vertices.size());*/
 
-    viewChar = glm::translate(mat4(1.0f), vec3(-12, 0, 12)) * glm::scale(mat4(1.0f), vec3(0.15, 0.05, 0.15));
+    glm::mat4 viewChar = glm::translate(mat4(1.0f), vec3(-12, 0, 12)) * glm::scale(mat4(1.0f), vec3(0.15, 0.05, 0.15));
 
 	  MVP = Projection * View * Model * viewChar;
     glUniformMatrix4fv(matrixID, 1, GL_FALSE, &MVP[0][0]);
