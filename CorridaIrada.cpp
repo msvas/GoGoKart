@@ -21,6 +21,7 @@ using namespace glm;
 #include "textures/car1.c"
 #include "textures/planeTexture.c"
 #include "textures/car2.c"
+#include "textures/sign.c"
 
 int oldTimeSinceStart = 0;
 float deltaTime;
@@ -75,13 +76,17 @@ int CorridaIrada::init_resources() {
     matrixID = glGetUniformLocation(programID, "MVP");
 
     mainCar = new Car(new Texture(programID, car1.width, car1.height, car1.pixel_data), new Model("objects/firstCar.obj"), false, 0.2);
+    mainCar->setPosition(0, -0.7, 0);
     insertTex(mainCar->carTex);
     insertModel(mainCar->carModel);
 
     computerCars[0] = new Car(new Texture(programID, car2.width, car2.height, car2.pixel_data), new Model("objects/secondCar.obj"), true, 4);
-    computerCars[0]->setPosition(5, 0, 0);
+    computerCars[0]->setPosition(5, 0.6, 0);
     insertTex(computerCars[0]->carTex);
     insertModel(computerCars[0]->carModel);
+
+    computerCars[1] = new Car(new Texture(programID, car2.width, car2.height, car2.pixel_data), new Model("objects/secondCar.obj"), true, 4);
+    computerCars[1]->setPosition(0, 0.6, 5);
 
     /*computerCars[1] = new Car(new Texture(programID, car1.width, car1.height, car1.pixel_data), new Model("objects/firstCar.obj"));
     insertTex(mainCar->carTex);
@@ -91,6 +96,11 @@ int CorridaIrada::init_resources() {
     this->insertTex(skyTex);
     skyModel = new Model("objects/sphere.obj");
     this->insertModel(skyModel);
+
+    signTex = new Texture(programID, finish.width, finish.height, finish.pixel_data);
+    this->insertTex(signTex);
+    signModel = new Model("objects/sign.obj");
+    this->insertModel(signModel);
 
     trackTex = new Texture(programID, planeTexture.width, planeTexture.height, planeTexture.pixel_data);
     this->insertTex(trackTex);
@@ -121,20 +131,29 @@ void CorridaIrada::idle() {
 
   if(!mainCar->checkTrackCollision(allTracks)) {
     mainCar->yPosition -= 0.01f;
-    //cout << "caindo" << "\n";
   }
+  mainCar->handleCarCollision(computerCars[0]);
+  mainCar->handleCarCollision(computerCars[1]);
+  computerCars[0]->handleCarCollision(mainCar);
+  //computerCars[1]->handleCarCollision(mainCar, computerCars[0]);
   if(!computerCars[0]->checkTrackCollision(allTracks)) {
     //mainCar->yPosition -= 0.01f;
   }
   computerCars[0]->movementGain(allTracks, deltaTime);
+
   if (keystates['w']) {   //-9 < z|x < 9
-      mainCar->zPosition -= 5 * deltaTime * cos(pi*angle/180);   //cos() e sin() usam radianos, ent鉶 deve-se multiplicar o
-      mainCar->xPosition -= 5 * deltaTime * sin(pi*angle/180);   //angulo por pi e dividir por 180 para ter o valor certo
+      mainCar->acceleration.z = -cos(pi*angle/180);   //cos() e sin() usam radianos, ent鉶 deve-se multiplicar o
+      mainCar->acceleration.x = -sin(pi*angle/180);   //angulo por pi e dividir por 180 para ter o valor certo
   }
-  if (keystates['s']) {
-      mainCar->zPosition += 5 * deltaTime * cos(pi*angle/180);
-      mainCar->xPosition += 5 * deltaTime * sin(pi*angle/180);
+  else if (keystates['s']) {
+      mainCar->acceleration.z = cos(pi*angle/180);
+      mainCar->acceleration.x = sin(pi*angle/180);
   }
+  else {
+    mainCar->acceleration.z = 0;
+    mainCar->acceleration.x = 0;
+  }
+  mainCar->updateMovement(deltaTime);
 
   if (keystates['a'])
       angle += 1.0f;
@@ -217,7 +236,7 @@ void CorridaIrada::onDisplay() {
 
     rotMao = glm::rotate(mat4(1.0f), 180.0f, vec3(0, 1.0f, 0));
     escMao = glm::scale(mat4(1.0f), vec3(4.0f, 4.0f, 4.0f));
-    trMao = glm::translate(mat4(1.0f), vec3(computerCars[0]->xPosition, 0, computerCars[0]->zPosition));
+    trMao = glm::translate(mat4(1.0f), vec3(computerCars[0]->xPosition, computerCars[0]->yPosition, computerCars[0]->zPosition));
     MVP = Projection * View * Model * trMao * escMao * rotMao;
     glUniformMatrix4fv(matrixID, 1, GL_FALSE, &MVP[0][0]);
     drawMesh(0, computerCars[0]->carModel->vertexBuffer, 1, computerCars[0]->carModel->uvBuffer, computerCars[0]->carTex->id, 0, computerCars[0]->carModel->vertices.size());
@@ -232,21 +251,17 @@ void CorridaIrada::onDisplay() {
         (*iterator)->drawTile(matrixID, MVP);
     }
 
-    /*
-    MVP = Projection * View * Model;
-    glUniformMatrix4fv(matrixID, 1, GL_FALSE, &MVP[0][0]);
-    std::list<TrackTile*>::const_iterator iterator;
-    TrackTile *auxTrack;
-    for (iterator = allTracks.begin(); iterator != allTracks.end(); ++iterator) {
-        auxTrack = (*iterator);
-        drawMesh(0, auxTrack->trackModel->vertexBuffer, 1, auxTrack->trackModel->uvBuffer, auxTrack->trackTex->id, 0, auxTrack->trackModel->vertices.size());
-    }*/
-
-    glm::mat4 viewChar = glm::translate(mat4(1.0f), vec3(0, 0, mainCar->zPosition)) * glm::translate(mat4(1.0f), vec3(0, 0, -mainCar->zPosition)) * glm::scale(mat4(1.0f), vec3(60, 60, 60));
+    glm::mat4 viewChar = glm::scale(mat4(1.0f), vec3(30, 30, 30));
 
 	  MVP = Projection * View * Model * viewChar;
     glUniformMatrix4fv(matrixID, 1, GL_FALSE, &MVP[0][0]);
     drawMesh(0, skyModel->vertexBuffer, 1, skyModel->uvBuffer, skyTex->id, 0, skyModel->vertices.size());
+
+    viewChar = glm::translate(mat4(1.0f), vec3(-12, 0, 12)) * glm::scale(mat4(1.0f), vec3(0.15, 0.05, 0.15));
+
+	  MVP = Projection * View * Model * viewChar;
+    glUniformMatrix4fv(matrixID, 1, GL_FALSE, &MVP[0][0]);
+    drawMesh(0, signModel->vertexBuffer, 1, signModel->uvBuffer, signTex->id, 0, signModel->vertices.size());
 
     //disable
     glDisableVertexAttribArray(0);
@@ -335,15 +350,17 @@ void CorridaIrada::createTrack() {
     tiles[i] = new TrackTile(trackTex, trackModel, 1, ((i-10)+1)*20, 0, 180);
     this->insertTrack(tiles[i]);
   }
-
+  int j = 29;
   for(i = 20; i < 30; i++) {
-    tiles[i] = new TrackTile(trackTex, trackModel, 1, ((i-20)+1)*20, 0, 0);
-    this->insertTrack(tiles[i]);
+    tiles[j] = new TrackTile(trackTex, trackModel, 1, 220, 0, ((j-20))*20);
+    this->insertTrack(tiles[j]);
+    j--;
   }
-
+  int k = 39;
   for(i = 30; i < 40; i++) {
-    tiles[i] = new TrackTile(trackTex, trackModel, 1, 220, 0, ((i-30))*20);
-    this->insertTrack(tiles[i]);
+    tiles[k] = new TrackTile(trackTex, trackModel, 1, ((k-30)+1)*20, 0, 0);
+    this->insertTrack(tiles[k]);
+    k--;
   }
 
 }

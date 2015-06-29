@@ -27,6 +27,8 @@ class CorridaIrada {
         Car *computerCars[2];
         Texture *skyTex;
         Model *skyModel;
+        Texture *signTex;
+        Model *signModel;
         Texture *trackTex;
         Model *trackModel;
 

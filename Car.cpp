@@ -14,6 +14,10 @@ Car::Car(Texture *tex, Model *model, bool cpuPlayer, float scale)
   xPosition = 0;
   yPosition = 0;
   zPosition = 0;
+  acceleration = glm::vec3(0, 0, 0);
+  speed = glm::vec3(0, 0, 0);
+  maxSpeed = glm::vec3(0.1, 0.1, 0.1);
+  lap = 0;
 
 
   //std::cout << "Dentro: " << carModel->getMax().z << " " << carModel->getMin().z << "\n";
@@ -25,13 +29,39 @@ Car::Car(Texture *tex, Model *model, bool cpuPlayer, float scale)
   //cout << getLeft() << " " << getRight() << "\n";
 }
 
+bool Car::handleCarCollision(Car* otherCar) {
+  bool collided = false;
+
+  if(otherCar->getRight() > getLeft()) {
+    if(otherCar->getLeft() < getLeft()) {
+      if(otherCar->getBottom() < getFront()) {
+        if(otherCar->getFront() > getBottom()) {
+          collided = true;
+          otherCar->xPosition = getLeft() - (carModel->getMax().x * scale);
+        }
+      }
+    }
+  }
+  if(otherCar->getLeft() < getRight()) {
+    if(otherCar->getRight() > getRight()) {
+      if(otherCar->getBottom() < getFront()) {
+        if(otherCar->getFront() > getBottom()) {
+          collided = true;
+          otherCar->xPosition = getRight() - (carModel->getMin().x * scale);
+        }
+      }
+    }
+  }
+
+}
+
 bool Car::checkTrackCollision(std::list<TrackTile*> allTracks) {
   bool collided = false;
   int i = 0;
 
   std::list<TrackTile*>::const_iterator iterator;
   for (iterator = allTracks.begin(); iterator != allTracks.end(); ++iterator) {
-    if ((*iterator)->getY() == this->yPosition) {
+    if ((*iterator)->getY() == (this->yPosition - yPosition)) {
       //cout << "Tile " << (*iterator)->getLeft() << " " << (*iterator)->getRight() << " " << (*iterator)->getBottom() << " " << (*iterator)->getFront() << "\n";
       //cout << "Car " << getLeft() << " " << getRight() << " " << getBottom() << " " << getFront() << "\n";
       if(getLeft() < (*iterator)->getRight()) {
@@ -43,6 +73,7 @@ bool Car::checkTrackCollision(std::list<TrackTile*> allTracks) {
             if(getBottom() < (*iterator)->getFront()) {
               collided = true;
               currentTile = i;
+              checkLap(*iterator);
               //cout << "Atual " << currentTile << "\n";
             }
           }
@@ -59,6 +90,18 @@ void Car::setPosition(float x, float y, float z) {
   this->yPosition = y;
   this->zPosition = z;
   //cout << xPosition << " " << zPosition << "\n";
+}
+
+void Car::checkLap(TrackTile* tile) {
+  if(currentTile == 0) {
+    if(getRight() > tile->getRight()) {
+      //cout << getLeft() << " " << tile->getLeft() << "\n";
+      if(getLeft() < tile->getRight()) {
+        lap++;
+        cout << lap << "\n";
+      }
+    }
+  }
 }
 
 float Car::getBottom() {
@@ -95,10 +138,40 @@ glm::vec3 Car::movementGain(std::list<TrackTile*> allTracks, float delta) {
 
   glm::vec3 auxPos = glm::vec3(xPosition, yPosition, zPosition);
   glm::vec3 distance = (*auxTile)->getPosition() - auxPos;
-  glm::vec3 direction = glm::normalize(distance);
+  distance.y += yPosition;
+  acceleration = glm::normalize(distance);
 
-  xPosition += direction.x * delta * 3;
+  updateMovement(delta);
+
+  /*xPosition += direction.x * delta * 3;
   yPosition += direction.y;
-  zPosition += direction.z * delta * 3;
+  zPosition += direction.z * delta * 3;*/
   //std::cout << "Dentro: " << xPosition << " " << zPosition << " " << delta << "\n";
+}
+
+bool Car::updateMovement(float delta) {
+  speed += acceleration * delta * 0.4f;
+
+  //cout << speed.x << "\n";
+
+  if(speed.x > maxSpeed.x)
+    speed.x = maxSpeed.x;
+  if(speed.x < -maxSpeed.x)
+    speed.x = -maxSpeed.x;
+  if(speed.z > maxSpeed.z)
+    speed.z = maxSpeed.z;
+  if(speed.z < -maxSpeed.z)
+    speed.z = -maxSpeed.z;
+
+  if(speed.x > 0)
+    speed.x -= delta * 0.1;
+  if(speed.x < 0)
+    speed.x += delta * 0.1;
+  if(speed.z > 0)
+    speed.z -= delta * 0.1;
+  if(speed.z < 0)
+    speed.z += delta * 0.1;
+
+  xPosition += speed.x;
+  zPosition += speed.z;
 }
